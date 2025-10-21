@@ -4,64 +4,120 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import cz.uso.zapisutkani.repository.TeamRepository;
+
+import java.io.IOException;
+import java.util.List;
 
 import cz.uso.zapisutkani.data.AppDatabase;
 import cz.uso.zapisutkani.data.Team;
-import cz.uso.zapisutkani.repository.TeamRepository;
+import cz.uso.zapisutkani.data.League;
+import cz.uso.zapisutkani.parser.TeamParser; // DŮLEŽITÉ: parser musí být ve složce cz.uso.zapisutkani.parser
 
 public class MainActivity extends AppCompatActivity {
 
-    private static final String LEAGUE_URL = "https://www.sipky.org/?region=ulk&page=ligova-skupina&league=244485";
     private AppDatabase db;
     private TextView textTeams;
+    private Button buttonLoadTeams, buttonRefresh;
+    private int selectedLeagueId = -1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        Button buttonLoad = findViewById(R.id.buttonLoad);
         textTeams = findViewById(R.id.textTeams);
+        buttonLoadTeams = findViewById(R.id.buttonLoadTeams);
+        buttonRefresh = findViewById(R.id.buttonRefresh);
+
         db = AppDatabase.getInstance(getApplicationContext());
 
-        // 🟢 Po spuštění zobrazíme, co je aktuálně v databázi
+        // Načti uloženou ligu
+        SharedPreferences prefs = getSharedPreferences("settings", MODE_PRIVATE);
+        selectedLeagueId = prefs.getInt("selectedLeagueId", -1);
+
+        if (selectedLeagueId == -1) {
+            Toast.makeText(this, "⚙️ Není vybraná žádná liga – otevři Nastavení.", Toast.LENGTH_LONG).show();
+            startActivity(new Intent(this, SettingsActivity.class));
+            return;
+        }
+
+        // Zkus načíst objekt ligy z DB (synchronně je to ok, jednorázově)
+        League selectedLeague = db.leagueDao().findById(selectedLeagueId);
+        if (selectedLeague == null) {
+            Toast.makeText(this, "⚠️ Vybraná liga neexistuje. Otevři Nastavení.", Toast.LENGTH_LONG).show();
+            startActivity(new Intent(this, SettingsActivity.class));
+            return;
+        }
+
+        setTitle("Liga: " + selectedLeague.name + " (" + selectedLeague.season + ")");
+
+        // obnovíme aktuální seznam z DB
         refreshTeams();
 
-        // 🔘 Po kliknutí načti data z webu
-        buttonLoad.setOnClickListener(v -> {
+        // tlačítko: načíst týmy z webu a uložit do DB (v novém vlákně)
+        buttonLoadTeams.setOnClickListener(v -> {
             textTeams.setText("⏳ Načítám týmy z webu...");
-            System.out.println("➡️ Spouštím načítání týmů z: " + LEAGUE_URL);
+            new Thread(() -> {
+                try {
+                    String leagueUrl = selectedLeague.url;
+                    // voláme parser, který vloží týmy do DB a vrátí seznam nově vložených
+                    List<Team> newTeams = TeamParser.loadTeamsFromLeague(leagueUrl, selectedLeagueId, db);
 
-            TeamRepository repo = new TeamRepository(this);
-            repo.updateTeamsFromWeb(LEAGUE_URL, count -> {
-                System.out.println("✅ Dokončeno, počet nově vložených týmů: " + count);
-                runOnUiThread(() -> {
-                    textTeams.setText("✅ Načteno " + count + " nových týmů.\n\nAktualizuji seznam...");
-                    refreshTeams();
-                });
-            });
+                    final int added = newTeams == null ? 0 : newTeams.size();
+                    runOnUiThread(() -> {
+                        Toast.makeText(this, "✅ Načteno " + added + " nových týmů.", Toast.LENGTH_SHORT).show();
+                        refreshTeams();
+                    });
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    runOnUiThread(() -> Toast.makeText(this, "Chyba při načítání: " + e.getMessage(), Toast.LENGTH_LONG).show());
+                }
+            }).start();
         });
+
+        // tlačítko: obnovit z databáze
+        buttonRefresh.setOnClickListener(v -> refreshTeams());
     }
 
-    // 🧩 Pomocná metoda pro výpis týmů z DB
     private void refreshTeams() {
         new Thread(() -> {
+            List<Team> teams = db.teamDao().getTeamsByLeague(selectedLeagueId);
+
+            // připrav text pro UI
             StringBuilder sb = new StringBuilder();
-            for (Team t : db.teamDao().getAllTeams()) {
-                sb.append("• ").append(t.teamName);
-                if (t.league != null && !t.league.isEmpty()) {
-                    sb.append(" (").append(t.league).append(")");
+            if (teams == null || teams.isEmpty()) {
+                sb.append("📭 Žádné týmy pro vybranou ligu.\nKlikni na 'Načti týmy z webu'.");
+            } else {
+                for (Team t : teams) {
+                    sb.append("• ").append(t.teamName);
+                    if (t.city != null && !t.city.isEmpty()) {
+                        sb.append(" (").append(t.city).append(")");
+                    }
+                    sb.append("\n");
                 }
-                sb.append("\n");
             }
+            final String display = sb.toString();
 
-            String text = (sb.length() == 0)
-                    ? "📭 Žádné týmy v databázi.\nKlikni na tlačítko pro načtení."
-                    : sb.toString();
-
-            System.out.println("📋 V DB je aktuálně " + db.teamDao().getAllTeams().size() + " týmů.");
-
-            runOnUiThread(() -> textTeams.setText(text));
+            runOnUiThread(() -> textTeams.setText(display));
         }).start();
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(android.view.Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(android.view.MenuItem item) {
+        if (item.getItemId() == R.id.action_settings) {
+            startActivity(new Intent(this, SettingsActivity.class));
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 }

@@ -42,6 +42,7 @@ public class SettingsActivity extends AppCompatActivity {
         new Thread(() -> {
             List<League> leagues = db.leagueDao().getAll();
             runOnUiThread(() -> {
+                System.out.println("Loaded leagues: " + leagues.size()); //test, pak smazat
                 if (leagues.isEmpty()) {
                     Toast.makeText(this, "⚠️ V databázi zatím nejsou žádné ligy.", Toast.LENGTH_SHORT).show();
                 } else {

@@ -6,7 +6,7 @@
     android:layout_height="match_parent">
 
     <TextView
-        android:text="Vyber ligu:"
+        android:text="@string/settings_select_league"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textStyle="bold" />
@@ -14,40 +14,40 @@
     <Spinner
         android:id="@+id/spinnerLeague"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="72dp"
         android:layout_marginBottom="16dp" />
 
     <TextView
-        android:text="Sezóna:"
+        android:text="@string/settings_season"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textStyle="bold" />
 
     <EditText
         android:id="@+id/editSeason"
-        android:hint="Např. 2024/2025"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="16dp" />
+        android:layout_height="66dp"
+        android:layout_marginBottom="16dp"
+        android:hint="@string/settings_season_hint" />
 
     <Button
         android:id="@+id/btnSave"
-        android:text="💾 Uložit nastavení"
+        android:text="@string/settings_save_settings"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
 
     <Button
         android:id="@+id/btnClearPrefs"
-        android:text="🧹 Vymazat nastavení"
+        android:text="@string/settings_clear_settings"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp" />
 
     <Button
         android:id="@+id/btnClearDB"
-        android:text="❌ Smazat databázi"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp" />
+        android:layout_marginTop="8dp"
+        android:text="@string/settings_delete_database" />
 
 </LinearLayout>

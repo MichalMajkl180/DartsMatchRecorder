@@ -19,8 +19,7 @@ import cz.uso.zapisutkani.dao.MatchPlayerDao;
                 Match.class,
                 MatchPlayer.class
         },
-        version = 4, // 🔹 zvyšte o +1 při změně struktury tabulek
-        exportSchema = true
+        version = 5 // 🔹 zvyšte o +1 při změně struktury tabulek
 )
 public abstract class AppDatabase extends RoomDatabase {
 

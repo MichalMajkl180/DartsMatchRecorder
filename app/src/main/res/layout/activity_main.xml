@@ -6,27 +6,69 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:padding="16dp"
+    android:background="#101010"
     tools:context=".MainActivity">
 
-    <!-- Titulek -->
     <TextView
         android:id="@+id/titleMain"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Darts Match Recorder"
+        android:text="🎯 Darts Match Recorder"
         android:textSize="22sp"
         android:textStyle="bold"
+        android:textColor="#00FF00"
         android:gravity="center"
         android:paddingBottom="12dp" />
 
-    <!-- Logovací výstup -->
-    <ScrollView
-        android:id="@+id/scrollLogsMain"
+    <Button
+        android:id="@+id/buttonUpdateTeams"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="🔄 Aktualizovat týmy"
+        android:textColor="#FFFFFF"
+        android:backgroundTint="#303030"
+        android:layout_marginBottom="8dp" />
+
+    <Button
+        android:id="@+id/buttonOpenSettings"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="⚙️ Nastavení"
+        android:textColor="#FFFFFF"
+        android:backgroundTint="#303030"
+        android:layout_marginBottom="12dp" />
+
+    <TextView
+        android:id="@+id/labelTeams"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="🏆 Uložené týmy:"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:textColor="#00FF00"
+        android:layout_marginBottom="6dp" />
+
+    <!-- ✅ ListView s tmavým pozadím -->
+    <ListView
+        android:id="@+id/listTeams"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:background="#111111"
-        android:padding="8dp">
+        android:divider="#333333"
+        android:dividerHeight="1dp"
+        android:background="#151515"
+        android:padding="4dp"
+        android:scrollbars="vertical" />
+
+    <!-- ✅ Logovací oblast -->
+    <ScrollView
+        android:id="@+id/scrollLogsMain"
+        android:layout_width="match_parent"
+        android:layout_height="200dp"
+        android:background="#0C0C0C"
+        android:padding="8dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="4dp">
 
         <TextView
             android:id="@+id/logTextView"

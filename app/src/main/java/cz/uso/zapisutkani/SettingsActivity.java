@@ -7,6 +7,7 @@ import android.os.Bundle;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.FileProvider;
@@ -61,7 +62,67 @@ public class SettingsActivity extends AppCompatActivity {
     }
 
     private void saveLeagueId() {
-        // ... (tvoje existující metoda)
+        try {
+            String input = editLeagueID.getText().toString().trim();
+            if (input.isEmpty()) {
+                AppLogger.w("SettingsActivity", "Pole LeagueID je prázdné!");
+                runOnUiThread(() ->
+                        Toast.makeText(this, "Zadej číslo ligy!", Toast.LENGTH_SHORT).show()
+                );
+                return;
+            }
+
+            int leagueId = Integer.parseInt(input);
+
+            // 🔹 Uložení do SharedPreferences
+            SharedPreferences.Editor editor = prefs.edit();
+            editor.putInt(KEY_LEAGUE_ID, leagueId);
+            editor.apply();
+
+            AppLogger.i("SettingsActivity", "LeagueID " + leagueId + " uložen do SharedPreferences.");
+            runOnUiThread(() ->
+                    Toast.makeText(this, "LeagueID " + leagueId + " uložen", Toast.LENGTH_SHORT).show()
+            );
+
+            // 🔹 Uložení nebo aktualizace ligy v DB
+            new Thread(() -> {
+                try {
+                    League existing = leagueDao.findById(leagueId);
+                    if (existing == null) {
+                        League league = new League();
+                        league.leagueId = leagueId;
+                        league.name = "Liga #" + leagueId;
+                        league.region = "ULK";
+                        league.url = "https://www.sipky.org/?region=ulk&page=ligova-skupina&league=" + leagueId;
+                        leagueDao.insertLeague(league);
+                        AppLogger.i("SettingsActivity", "Do DB vložena nová liga: " + league.name);
+                    } else {
+                        AppLogger.d("SettingsActivity", "Liga s ID " + leagueId + " již v DB existuje.");
+                    }
+
+                    // 🔹 Přesměrování zpět do MainActivity
+                    runOnUiThread(() -> {
+                        AppLogger.i("SettingsActivity", "LeagueID " + leagueId + " uložen. Otevírám MainActivity...");
+                        Toast.makeText(this, "Uloženo! Otevírám hlavní obrazovku...", Toast.LENGTH_SHORT).show();
+                        Intent intent = new Intent(SettingsActivity.this, MainActivity.class);
+                        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+                        startActivity(intent);
+                        finish();
+                    });
+                } catch (Exception e) {
+                    AppLogger.e("SettingsActivity", "Chyba při ukládání do DB: " + e.getMessage());
+                    runOnUiThread(() ->
+                            Toast.makeText(this, "Chyba při ukládání do DB!", Toast.LENGTH_LONG).show()
+                    );
+                }
+            }).start();
+
+        } catch (NumberFormatException e) {
+            AppLogger.e("SettingsActivity", "Neplatné číslo LeagueID!");
+            runOnUiThread(() ->
+                    Toast.makeText(this, "Neplatné číslo!", Toast.LENGTH_SHORT).show()
+            );
+        }
     }
 
     private void exportLogs() {

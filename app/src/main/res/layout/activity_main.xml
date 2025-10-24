@@ -1,65 +1,41 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/mainLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:padding="16dp"
     tools:context=".MainActivity">
 
-    <!-- Nadpis sekce -->
+    <!-- Titulek -->
     <TextView
-        android:id="@+id/textHeader"
+        android:id="@+id/titleMain"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Týmy v aktuální lize:"
-        android:textSize="20sp"
+        android:text="Darts Match Recorder"
+        android:textSize="22sp"
         android:textStyle="bold"
+        android:gravity="center"
         android:paddingBottom="12dp" />
 
-    <!-- Textové pole pro výpis týmů -->
+    <!-- Logovací výstup -->
     <ScrollView
+        android:id="@+id/scrollLogsMain"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1">
+        android:layout_weight="1"
+        android:background="#111111"
+        android:padding="8dp">
 
         <TextView
-            android:id="@+id/textTeams"
+            android:id="@+id/logTextView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Zde se zobrazí seznam týmů..."
-            android:textSize="16sp"
-            android:padding="8dp" />
+            android:textColor="#00FF00"
+            android:textSize="13sp"
+            android:fontFamily="monospace"
+            android:text="--- LOG START ---" />
     </ScrollView>
-
-    <!-- Ovládací tlačítka -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center"
-        android:layout_marginTop="12dp"
-        android:weightSum="2">
-
-        <Button
-            android:id="@+id/buttonLoadTeams"
-            android:layout_width="0dp"
-            android:layout_weight="1"
-            android:layout_height="wrap_content"
-            android:text="Načti týmy z webu"
-            android:backgroundTint="#1976D2"
-            android:textColor="#FFFFFF"
-            android:layout_marginEnd="8dp" />
-
-        <Button
-            android:id="@+id/buttonRefresh"
-            android:layout_width="0dp"
-            android:layout_weight="1"
-            android:layout_height="wrap_content"
-            android:text="Obnovit"
-            android:backgroundTint="#388E3C"
-            android:textColor="#FFFFFF"
-            android:layout_marginStart="8dp" />
-    </LinearLayout>
 
 </LinearLayout>

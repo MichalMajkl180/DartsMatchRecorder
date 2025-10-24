@@ -1,123 +1,93 @@
 package cz.uso.zapisutkani;
 
-import androidx.appcompat.app.AppCompatActivity;
-import android.os.Bundle;
-import android.widget.Button;
-import android.widget.TextView;
-import android.widget.Toast;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import cz.uso.zapisutkani.repository.TeamRepository;
+import android.os.Bundle;
+import android.widget.TextView;
 
-import java.io.IOException;
+import androidx.appcompat.app.AppCompatActivity;
+
 import java.util.List;
 
+import cz.uso.zapisutkani.dao.LeagueDao;
 import cz.uso.zapisutkani.data.AppDatabase;
-import cz.uso.zapisutkani.data.Team;
 import cz.uso.zapisutkani.data.League;
-import cz.uso.zapisutkani.parser.TeamParser; // DŮLEŽITÉ: parser musí být ve složce cz.uso.zapisutkani.parser
+import cz.uso.zapisutkani.data.Team;
+import cz.uso.zapisutkani.utils.AppLogger; //doplnil jsem si tohle sám
 
 public class MainActivity extends AppCompatActivity {
 
+    private TextView logTextView;
+    private SharedPreferences prefs;
     private AppDatabase db;
-    private TextView textTeams;
-    private Button buttonLoadTeams, buttonRefresh;
-    private int selectedLeagueId = -1;
+    private LeagueDao leagueDao;
+
+    private static final String PREFS_NAME = "DartsPrefs";
+    private static final String KEY_LEAGUE_ID = "LeagueID";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        textTeams = findViewById(R.id.textTeams);
-        buttonLoadTeams = findViewById(R.id.buttonLoadTeams);
-        buttonRefresh = findViewById(R.id.buttonRefresh);
+        logTextView = findViewById(R.id.logTextView);
+        AppLogger.setLogView(logTextView);
 
+        AppLogger.d("MainActivity", "Spouštím MainActivity...");
+
+        prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
         db = AppDatabase.getInstance(getApplicationContext());
+        leagueDao = db.leagueDao();
 
-        // Načti uloženou ligu
-        SharedPreferences prefs = getSharedPreferences("settings", MODE_PRIVATE);
-        selectedLeagueId = prefs.getInt("selectedLeagueId", -1);
+        checkAndLoadLeague();
+    }
 
-        if (selectedLeagueId == -1) {
-            Toast.makeText(this, "⚙️ Není vybraná žádná liga – otevři Nastavení.", Toast.LENGTH_LONG).show();
-            startActivity(new Intent(this, SettingsActivity.class));
+    private void checkAndLoadLeague() {
+        int savedLeagueId = prefs.getInt(KEY_LEAGUE_ID, -1);
+        AppLogger.d("MainActivity", "Načtená hodnota LeagueID ze SharedPreferences: " + savedLeagueId);
+
+        int leagueCount = leagueDao.getLeagueCount();
+        AppLogger.d("MainActivity", "Počet lig v databázi: " + leagueCount);
+
+        if (savedLeagueId == -1 || leagueCount == 0) {
+            AppLogger.d("MainActivity", "Neuložené ID ligy nebo prázdná databáze → přesměrovávám do SettingsActivity...");
+            Intent intent = new Intent(this, SettingsActivity.class);
+            startActivity(intent);
+            finish();
             return;
         }
 
-        // Zkus načíst objekt ligy z DB (synchronně je to ok, jednorázově)
-        League selectedLeague = db.leagueDao().findById(selectedLeagueId);
-        if (selectedLeague == null) {
-            Toast.makeText(this, "⚠️ Vybraná liga neexistuje. Otevři Nastavení.", Toast.LENGTH_LONG).show();
-            startActivity(new Intent(this, SettingsActivity.class));
+        League league = leagueDao.getLeagueById(savedLeagueId);
+        if (league == null) {
+            AppLogger.d("MainActivity", "Liga s ID " + savedLeagueId + " nebyla nalezena. Spouštím nastavení.");
+            Intent intent = new Intent(this, SettingsActivity.class);
+            startActivity(intent);
+            finish();
             return;
         }
 
-        setTitle("Liga: " + selectedLeague.name + " (" + selectedLeague.season + ")");
-
-        // obnovíme aktuální seznam z DB
-        refreshTeams();
-
-        // tlačítko: načíst týmy z webu a uložit do DB (v novém vlákně)
-        buttonLoadTeams.setOnClickListener(v -> {
-            textTeams.setText("⏳ Načítám týmy z webu...");
-            new Thread(() -> {
-                try {
-                    String leagueUrl = selectedLeague.url;
-                    // voláme parser, který vloží týmy do DB a vrátí seznam nově vložených
-                    List<Team> newTeams = TeamParser.loadTeamsFromLeague(leagueUrl, selectedLeagueId, db);
-
-                    final int added = newTeams == null ? 0 : newTeams.size();
-                    runOnUiThread(() -> {
-                        Toast.makeText(this, "✅ Načteno " + added + " nových týmů.", Toast.LENGTH_SHORT).show();
-                        refreshTeams();
-                    });
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    runOnUiThread(() -> Toast.makeText(this, "Chyba při načítání: " + e.getMessage(), Toast.LENGTH_LONG).show());
-                }
-            }).start();
-        });
-
-        // tlačítko: obnovit z databáze
-        buttonRefresh.setOnClickListener(v -> refreshTeams());
+        AppLogger.d("MainActivity", "Načtena liga: " + league.getName() + " (ID: " + league.getId() + ")");
+        loadTeamsForLeague(savedLeagueId);
     }
 
-    private void refreshTeams() {
-        new Thread(() -> {
-            List<Team> teams = db.teamDao().getTeamsByLeague(selectedLeagueId);
+    private void loadTeamsForLeague(int leagueId) {
+        List<Team> teams = leagueDao.getTeamsByLeague(leagueId);
 
-            // připrav text pro UI
-            StringBuilder sb = new StringBuilder();
-            if (teams == null || teams.isEmpty()) {
-                sb.append("📭 Žádné týmy pro vybranou ligu.\nKlikni na 'Načti týmy z webu'.");
-            } else {
-                for (Team t : teams) {
-                    sb.append("• ").append(t.teamName);
-                    if (t.city != null && !t.city.isEmpty()) {
-                        sb.append(" (").append(t.city).append(")");
-                    }
-                    sb.append("\n");
-                }
-            }
-            final String display = sb.toString();
-
-            runOnUiThread(() -> textTeams.setText(display));
-        }).start();
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(android.view.Menu menu) {
-        getMenuInflater().inflate(R.menu.menu_main, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(android.view.MenuItem item) {
-        if (item.getItemId() == R.id.action_settings) {
-            startActivity(new Intent(this, SettingsActivity.class));
-            return true;
+        if (teams == null || teams.isEmpty()) {
+            AppLogger.d("MainActivity", "Žádné týmy v lize ID " + leagueId);
+            return;
         }
-        return super.onOptionsItemSelected(item);
+
+        AppLogger.d("MainActivity", "Načítám " + teams.size() + " týmů pro ligu ID " + leagueId);
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("🏆 Liga ID ").append(leagueId).append("\n");
+        sb.append("=========================\n");
+        for (Team team : teams) {
+            sb.append("• ").append(team.getName()).append(" (ID: ").append(team.getId()).append(")\n");
+        }
+
+        AppLogger.d("MainActivity", "Týmy úspěšně načteny.");
+        AppLogger.d("MainActivity", sb.toString());
     }
 }

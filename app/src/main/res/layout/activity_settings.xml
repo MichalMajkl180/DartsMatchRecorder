@@ -1,53 +1,61 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
     android:orientation="vertical"
     android:padding="16dp"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    tools:context=".SettingsActivity">
 
     <TextView
-        android:text="@string/settings_select_league"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textStyle="bold" />
-
-    <Spinner
-        android:id="@+id/spinnerLeague"
+        android:id="@+id/settingsTitle"
         android:layout_width="match_parent"
-        android:layout_height="72dp"
-        android:layout_marginBottom="16dp" />
-
-    <TextView
-        android:text="@string/settings_season"
-        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textStyle="bold" />
+        android:text="⚙️ Nastavení ligy"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:paddingBottom="12dp" />
 
     <EditText
-        android:id="@+id/editSeason"
-        android:layout_width="match_parent"
-        android:layout_height="66dp"
-        android:layout_marginBottom="16dp"
-        android:hint="@string/settings_season_hint" />
-
-    <Button
-        android:id="@+id/btnSave"
-        android:text="@string/settings_save_settings"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
-
-    <Button
-        android:id="@+id/btnClearPrefs"
-        android:text="@string/settings_clear_settings"
+        android:id="@+id/editLeagueID"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:hint="Zadej LeagueID"
+        android:inputType="number" />
+
+    <Button
+        android:id="@+id/buttonSaveSettings"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Uložit"
+        android:layout_marginTop="12dp" />
+
+    <Button
+        android:id="@+id/buttonExportLogs"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="📤 Exportovat logy"
         android:layout_marginTop="8dp" />
 
-    <Button
-        android:id="@+id/btnClearDB"
+    <!-- Logovací výstup -->
+    <ScrollView
+        android:id="@+id/scrollLogsSettings"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text="@string/settings_delete_database" />
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:background="#111111"
+        android:padding="8dp"
+        android:layout_marginTop="16dp">
+
+        <TextView
+            android:id="@+id/logTextView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#00FF00"
+            android:textSize="13sp"
+            android:fontFamily="monospace"
+            android:text="--- LOG START ---" />
+    </ScrollView>
 
 </LinearLayout>

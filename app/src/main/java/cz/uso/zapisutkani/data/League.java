@@ -1,25 +1,47 @@
 package cz.uso.zapisutkani.data;
 
+import androidx.room.ColumnInfo;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
 
-@Entity
+@Entity(tableName = "League")
 public class League {
+
     @PrimaryKey(autoGenerate = true)
-    public int leagueId;
+    @ColumnInfo(name = "id")
+    private int id;
 
-    public String name;      // např. "2. liga B JIH"
-    public String season;    // např. "2024/25"
-    public String region;    // volitelné
-    public String url;       // volitelné, adresa na sipky.org
+    @ColumnInfo(name = "name")
+    private String name;
 
+    // 🔹 Konstruktor
+    public League(String name) {
+        this.name = name;
+    }
+
+    // 🔹 Gettery / Settery
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    // 🔹 Pro ladění
     @Override
     public String toString() {
-        // co se zobrazí ve Spinneru — můžeš upravit formát podle potřeby
-        if (season != null && !season.isEmpty()) {
-            return season + " — " + (name != null ? name : "");
-        } else {
-            return (name != null ? name : "");
-        }
+        return "League{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                '}';
     }
 }

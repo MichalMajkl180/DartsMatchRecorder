@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">DartsMatchRecorder</string>
+    <string name="settings_select_league">Vyber ligu:</string>
+    <string name="settings_season">Sezóna:</string>
+    <string name="settings_season_hint">Např. 2024/2025</string>
+    <string name="settings_save_settings">💾 Uložit nastavení</string>
+    <string name="settings_clear_settings">🧹 Vymazat nastavení</string>
+    <string name="settings_delete_database">❌ Smazat databázi</string>
+</resources>

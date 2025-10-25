@@ -13,11 +13,12 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
+import cz.uso.zapisutkani.BuildConfig;
+
 /**
- * 🧩 Univerzální logger pro vývoj a ladění.
- * - vypisuje do Logcatu
- * - vypisuje do TextView
- * - ukládá do souboru (DartsLogs.txt)
+ * 🧩 Univerzální logger pro vývoj i produkci.
+ * - při DEBUG buildu loguje do Logcatu i TextView
+ * - vždy ukládá do souboru (DartsLogs.txt)
  */
 public class AppLogger {
 
@@ -39,31 +40,45 @@ public class AppLogger {
         logView = view;
     }
 
+    // -----------------------------------------------------------
+    // 🔸 DEBUG
     public static void d(String tag, String message) {
-        Log.d(tag, message);
-        appendToView("🐞 " + tag + ": " + message);
+        if (BuildConfig.DEBUG) {
+            Log.d(tag, message);
+            appendToView("🐞 " + tag + ": " + message);
+        }
         appendToFile("DEBUG", tag, message);
     }
 
+    // 🔸 ERROR
     public static void e(String tag, String message) {
-        Log.e(tag, message);
-        appendToView("❌ " + tag + ": " + message);
+        if (BuildConfig.DEBUG) {
+            Log.e(tag, message);
+            appendToView("❌ " + tag + ": " + message);
+        }
         appendToFile("ERROR", tag, message);
     }
 
+    // 🔸 INFO
     public static void i(String tag, String message) {
-        Log.i(tag, message);
-        appendToView("ℹ️ " + tag + ": " + message);
+        if (BuildConfig.DEBUG) {
+            Log.i(tag, message);
+            appendToView("ℹ️ " + tag + ": " + message);
+        }
         appendToFile("INFO", tag, message);
     }
 
+    // 🔸 WARNING
     public static void w(String tag, String message) {
-        Log.w(tag, message);
-        appendToView("⚠️ " + tag + ": " + message);
+        if (BuildConfig.DEBUG) {
+            Log.w(tag, message);
+            appendToView("⚠️ " + tag + ": " + message);
+        }
         appendToFile("WARN", tag, message);
     }
+    // -----------------------------------------------------------
 
-    // 🔹 Přidá text do UI logu
+    // 🔹 Přidá text do UI logu (pouze pro vývoj)
     private static void appendToView(String msg) {
         if (logView == null) return;
         uiHandler.post(() -> {
@@ -85,7 +100,9 @@ public class AppLogger {
         try (FileWriter writer = new FileWriter(logFile, true)) {
             writer.append(logLine);
         } catch (IOException e) {
-            Log.e("AppLogger", "Chyba při zápisu logu do souboru: " + e.getMessage());
+            if (BuildConfig.DEBUG) {
+                Log.e("AppLogger", "Chyba při zápisu logu do souboru: " + e.getMessage());
+            }
         }
     }
 

@@ -6,7 +6,7 @@ import android.os.Bundle;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
-import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -23,7 +23,6 @@ public class MainActivity extends AppCompatActivity {
     private static final String PREFS_NAME = "DartsPrefs";
     private static final String KEY_LEAGUE_ID = "LeagueID";
 
-    private TextView logTextView;
     private Button buttonUpdateTeams;
     private Button buttonOpenSettings;
     private ListView listTeams;
@@ -41,13 +40,11 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         // 🔹 Inicializace UI
-        logTextView = findViewById(R.id.logTextView);
         buttonUpdateTeams = findViewById(R.id.buttonUpdateTeams);
         buttonOpenSettings = findViewById(R.id.buttonOpenSettings);
         listTeams = findViewById(R.id.listTeams);
 
-        // 🔹 Logger
-        AppLogger.setLogView(logTextView);
+        // 🔹 Logger (jen soubor + Logcat)
         AppLogger.initFileLogging(getApplicationContext());
         AppLogger.i("MainActivity", "Aplikace spuštěna");
 
@@ -78,18 +75,23 @@ public class MainActivity extends AppCompatActivity {
 
         // 🔹 Aktualizovat týmy z webu
         buttonUpdateTeams.setOnClickListener(v -> {
+            Toast.makeText(this, "🔄 Načítám týmy z webu...", Toast.LENGTH_SHORT).show();
             AppLogger.i("MainActivity", "Spouštím aktualizaci týmů...");
+
             repository.updateTeamsFromWeb(leagueUrl, count -> runOnUiThread(() -> {
-                AppLogger.i("MainActivity", "✅ Načteno a uloženo " + count + " nových týmů.");
+                Toast.makeText(this, "✅ Uloženo " + count + " týmů", Toast.LENGTH_SHORT).show();
+                AppLogger.i("MainActivity", "Načteno a uloženo " + count + " týmů.");
                 loadTeamsFromDatabase(leagueId); // obnov seznam
             }));
         });
 
         // 🔹 Otevřít nastavení
-        buttonOpenSettings.setOnClickListener(v ->
-                startActivity(new Intent(MainActivity.this, SettingsActivity.class)));
+        buttonOpenSettings.setOnClickListener(v -> {
+            Toast.makeText(this, "⚙️ Otevírám nastavení...", Toast.LENGTH_SHORT).show();
+            startActivity(new Intent(MainActivity.this, SettingsActivity.class));
+        });
 
-        // zobrazí web s profilem týmu
+        // 🔹 Kliknutí na tým – otevře jeho profil
         listTeams.setOnItemClickListener((parent, view, position, id) -> {
             new Thread(() -> {
                 try {
@@ -99,20 +101,27 @@ public class MainActivity extends AppCompatActivity {
                         String url = team.getUrl();
                         if (url != null && !url.isEmpty()) {
                             runOnUiThread(() -> {
-                                AppLogger.i("MainActivity", "Otevírám stránku týmu: " + team.getName());
-                                Intent browserIntent = new Intent(Intent.ACTION_VIEW, android.net.Uri.parse(url));
-                                startActivity(browserIntent);
+                                Toast.makeText(this, "🌐 Otevírám: " + team.getName(), Toast.LENGTH_SHORT).show();
+                                AppLogger.i("MainActivity", "Otevírám profil týmu: " + team.getName());
+
+                                Intent intent = new Intent(MainActivity.this, TeamDetailActivity.class);
+                                intent.putExtra("TEAM_URL", url);
+                                intent.putExtra("TEAM_NAME", team.getName());
+                                startActivity(intent);
                             });
                         } else {
+                            runOnUiThread(() ->
+                                    Toast.makeText(this, "⚠️ Tým nemá URL", Toast.LENGTH_SHORT).show());
                             AppLogger.w("MainActivity", "Tým " + team.getName() + " nemá uloženou URL!");
                         }
                     }
                 } catch (Exception e) {
                     AppLogger.e("MainActivity", "Chyba při otevírání profilu: " + e.getMessage());
+                    runOnUiThread(() ->
+                            Toast.makeText(this, "❌ Chyba při otevírání profilu", Toast.LENGTH_SHORT).show());
                 }
             }).start();
         });
-
     }
 
     /**
@@ -129,10 +138,13 @@ public class MainActivity extends AppCompatActivity {
 
                 runOnUiThread(() -> {
                     teamAdapter.notifyDataSetChanged();
+                    Toast.makeText(this, "📋 Načteno " + teamNames.size() + " týmů", Toast.LENGTH_SHORT).show();
                     AppLogger.i("MainActivity", "Z databáze načteno " + teamNames.size() + " týmů.");
                 });
             } catch (Exception e) {
                 AppLogger.e("MainActivity", "Chyba při načítání týmů z DB: " + e.getMessage());
+                runOnUiThread(() ->
+                        Toast.makeText(this, "❌ Chyba při načítání týmů", Toast.LENGTH_SHORT).show());
             }
         }).start();
     }
